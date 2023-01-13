@@ -1,0 +1,46 @@
+---
+title: "bnb大哥分析"
+author: "Zhe Sun"
+date: "2023/1/13"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE)
+```
+
+```{r}
+library(tidyverse)
+source("utils.R")
+dta <- read_csv("./target.csv")
+```
+
+```{r}
+dta <- dta %>%  
+  mutate(
+    user_position = ifelse(user_position == 0, "bull", "bear"),
+    bet_amount = to_base(bet_amount, 18),
+    lock_price = to_base(lock_price, 8),
+    close_price = to_base(close_price, 8),
+    bear_amount = to_base(bear_amount, 18),
+    bull_amount = to_base(bull_amount, 18),
+    total_amount = to_base(total_amount, 18),
+    reward_amount = to_base(reward_amount, 18),
+    reward_base_calamount = to_base(reward_base_calamount, 18)
+  ) %>% 
+  rowwise() %>% 
+  mutate(result = check_result(user_position, lock_price, close_price))
+
+```
+
+```{r}
+dta %>% 
+  filter(result == 'lose') %>% 
+  mutate(price_diff = abs(close_price - lock_price)) %>% 
+  group_by("价差绝对值区间" = cut(price_diff, breaks = seq(0, 3, 0.05))) %>% 
+  summarise(count = n()) %>% 
+  mutate("总次数" = sum(count), 
+         "百分比" = count / sum(count)) %>% 
+  rename("次数" = count)
+```
+

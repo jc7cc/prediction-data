@@ -1,0 +1,68 @@
+---
+title: "bnb-pridict"
+author: "Zhe Sun"
+date: "2023/1/13"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE)
+```
+
+```{r}
+library(tidyverse)
+source("utils.R")
+dta <- read_csv("./bnb-predict.csv")
+```
+
+```{r}
+dta <-  dta %>%  
+  filter(
+    oracle_called == TRUE,
+    total_amount > 0
+  ) %>% 
+  mutate(
+    lock_price = to_base(lock_price, 8),
+    close_price = to_base(close_price, 8),
+    bear_amount = to_base(bear_amount, 18),
+    bull_amount = to_base(bull_amount, 18),
+    total_amount = to_base(total_amount, 18),
+    reward_amount = to_base(reward_amount, 18),
+    reward_base_calamount = to_base(reward_base_calamount, 18),
+  )  %>% 
+  rowwise() %>% 
+  mutate(
+    bear_payout = get_payout_rate(bear_amount, reward_amount),
+    bull_payout = get_payout_rate(bull_amount, reward_amount),
+    side = get_side(lock_price, close_price)
+  ) %>% 
+  mutate(
+    higher_payout = ifelse(bear_payout > bull_payout, 'bear', 'bull'),
+  ) %>% 
+  mutate(
+        group = ifelse(side == higher_payout, '高赔率赢', '低赔率赢'),
+        win_payout = ifelse(side == higher_payout, )
+        price_diff = abs(close_price - lock_price)
+  )
+```
+
+
+```{r}
+
+dta %>% 
+  filter(
+    !is.na(higher_payout)
+    ) %>% 
+  group_by(range = cut(price_diff, breaks = seq(0, 5, 0.1)), group) %>% 
+  summarise(count = n()) %>% 
+  mutate(percent = count / sum(count),
+         sum = sum(count)) %>% 
+  filter(!is.na(range))
+
+# %>% 
+#   filter(percent > 0.1)
+head(dta)
+ggplot(data = dta) +
+  geom_histogram(x = price_diff, y = )
+```
+

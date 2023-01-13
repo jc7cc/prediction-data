@@ -1,0 +1,29 @@
+---
+title: "diff"
+author: "Zhe Sun"
+date: "2023/1/12"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+```
+
+```{r}
+dta <- read_csv('./diff.csv')
+
+dta <- dta %>% 
+  mutate(diff = ifelse(cexbuydexsell_diff > cexselldexbuy_diff, cexbuydexsell_diff, cexselldexbuy_diff))  %>% 
+  filter(diff > 0)
+
+dta %>% 
+  filter(!is.na(dta$cexsell)) %>% 
+  group_by(date, range = cut(diff, breaks = seq(0, 2, by = 0.5))) %>% 
+  summarise(n = n())
+```
+
+
